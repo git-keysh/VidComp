@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 OP Video Compressor - FFmpeg Tool</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 OP Video Compressor</h1>
+            <p class="subtitle">Powered by FFmpeg - Compress videos with precision</p>
+        </header>
+
+        <div class="card">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <p>Drag & drop videos here or click to select</p>
+                <p class="small">Supports: MP4, MKV, MOV, AVI, WebM (Max 1GB per file, 10 files)</p>
+                <input type="file" id="fileInput" multiple accept=".mp4,.mkv,.mov,.avi,.webm,.m4v">
+            </div>
+
+            <div class="settings">
+                <h3>⚙️ Compression Settings</h3>
+                <div class="settings-grid">
+                    <div class="setting">
+                        <label>Target Size</label>
+                        <div class="size-input">
+                            <input type="number" id="targetSize" value="50" step="10" min="1">
+                            <select id="sizeUnit">
+                                <option value="MB" selected>MB</option>
+                                <option value="GB">GB</option>
+                                <option value="KB">KB</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting">
+                        <label>Quality</label>
+                        <select id="quality">
+                            <option value="low">Low (Faster, smaller)</option>
+                            <option value="medium" selected>Medium (Balanced)</option>
+                            <option value="high">High (Better quality)</option>
+                            <option value="veryhigh">Very High (Best quality)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting">
+                        <label>Encoding Speed</label>
+                        <select id="preset">
+                            <option value="ultrafast">Ultrafast (Larger file)</option>
+                            <option value="fast">Fast</option>
+                            <option value="medium" selected>Medium (Balanced)</option>
+                            <option value="slow">Slow (Smaller file)</option>
+                            <option value="veryslow">Veryslow (Smallest file)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button id="compressBtn" class="btn-primary" disabled>
+                <span class="btn-text">Compress Videos</span>
+                <span class="btn-loader hidden"></span>
+            </button>
+
+            <div id="fileList" class="file-list hidden"></div>
+        </div>
+
+        <div id="results" class="results hidden">
+            <h2>📊 Results</h2>
+            <div id="resultsContainer"></div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

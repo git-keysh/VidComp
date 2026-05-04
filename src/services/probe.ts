@@ -36,9 +36,9 @@ export function getVideoInfo(file: string): Promise<VideoInfo | null> {
                 duration: metadata.format.duration || 0,
                 width: videoStream.width || 0,
                 height: videoStream.height || 0,
-                bitrate: parseInt(metadata.format.bit_rate || '0'),
+                bitrate: parseInt(String(metadata.format.bit_rate || '0')),
                 codec: videoStream.codec_name || 'unknown',
-                size: metadata.format.size ? parseInt(metadata.format.size) : 0,
+                size: metadata.format.size ? parseInt(String(metadata.format.size)) : 0,
             });
         });
     });

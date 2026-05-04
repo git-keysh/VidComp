@@ -1,4 +1,3 @@
-id="vj3kq1"
 <!-- HEADER BANNER -->
 <div align="center">
 

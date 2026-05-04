@@ -2,8 +2,8 @@ import "express-async-errors";
 import express, { ErrorRequestHandler } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import multer from "multer";
 import rateLimit from "express-rate-limit";
-import path from "path";
 import fs from "fs";
 import { PORT, NODE_ENV, PATHS } from "./config";
 import logger from "./utils/logger";
@@ -36,7 +36,7 @@ app.use("/temp", express.static(PATHS.temp));
 
 app.use("/process", processRoute);
 
-app.get("/health", async (req, res) => {
+app.get("/health", async (_req, res) => {
     try {
         await getFFmpegVersion();
         res.json({ status: "ok", ffmpeg: "available", timestamp: new Date().toISOString() });
@@ -45,14 +45,16 @@ app.get("/health", async (req, res) => {
     }
 });
 
-const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     logger.error(err.stack || err.message);
     
     if (err instanceof multer.MulterError) {
-        if (err.code === "FILE_TOO_LARGE") {
-            return res.status(413).json({ error: "File too large" });
+        if (err.code === "LIMIT_FILE_SIZE") {
+            res.status(413).json({ error: "File too large" });
+            return;
         }
-        return res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message });
+        return;
     }
     
     res.status(500).json({ error: "Internal server error" });

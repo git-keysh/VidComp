@@ -3,7 +3,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { PATHS, LIMITS, QUALITY_PRESETS, FFMPEG_PRESETS } from "../config";
-import { getDuration, getVideoInfo } from "../services/probe";
+import { getDuration } from "../services/probe";
 import { runFFmpeg } from "../services/ffmpeg";
 import { calculateOptimalSettings, formatBitrate } from "../utils/bitrate";
 import { ProcessResult, ProcessRequest } from "../types";
@@ -13,13 +13,13 @@ import { formatFileSize, cleanupFiles } from "../services/files";
 const router = Router();
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (_req, _file, cb) => {
         if (!fs.existsSync(PATHS.uploads)) {
             fs.mkdirSync(PATHS.uploads, { recursive: true });
         }
         cb(null, PATHS.uploads);
     },
-    filename: (req, file, cb) => {
+    filename: (_req, file, cb) => {
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
         cb(null, `${uniqueSuffix}-${file.originalname}`);
     },
@@ -31,7 +31,7 @@ const upload = multer({
         fileSize: LIMITS.MAX_FILE_SIZE,
         files: LIMITS.MAX_FILES,
     },
-    fileFilter: (req, file, cb) => {
+    fileFilter: (_req, file, cb) => {
         const ext = path.extname(file.originalname).toLowerCase();
         if (LIMITS.ALLOWED_EXTENSIONS.includes(ext)) {
             cb(null, true);
@@ -124,7 +124,7 @@ router.post("/", upload.array("videos", LIMITS.MAX_FILES), async (req, res) => {
         }
     }
 
-    res.json({
+    return res.json({
         success: true,
         summary: {
             total: results.length,

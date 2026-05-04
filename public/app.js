@@ -7,20 +7,21 @@ const resultsContainer = document.getElementById('resultsContainer');
 
 let selectedFiles = [];
 
-// Upload area events
 uploadArea.addEventListener('click', () => fileInput.click());
+
 uploadArea.addEventListener('dragover', (e) => {
     e.preventDefault();
     uploadArea.classList.add('dragover');
 });
+
 uploadArea.addEventListener('dragleave', () => {
     uploadArea.classList.remove('dragover');
 });
+
 uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadArea.classList.remove('dragover');
-    const files = Array.from(e.dataTransfer.files);
-    handleFiles(files);
+    handleFiles(Array.from(e.dataTransfer.files));
 });
 
 fileInput.addEventListener('change', (e) => {
@@ -28,30 +29,32 @@ fileInput.addEventListener('change', (e) => {
 });
 
 function handleFiles(files) {
-    const videoFiles = files.filter(f => 
-        f.type.startsWith('video/') || 
-        /\.(mp4|mkv|mov|avi|webm|m4v)$/i.test(f.name)
+    const videoFiles = files.filter(file =>
+        file.type.startsWith('video/') ||
+        /\.(mp4|mkv|mov|avi|webm|m4v)$/i.test(file.name)
     );
-    
+
     selectedFiles = [...selectedFiles, ...videoFiles];
+
     updateFileList();
     compressBtn.disabled = selectedFiles.length === 0;
 }
 
 function updateFileList() {
-    if (selectedFiles.length === 0) {
+    if (!selectedFiles.length) {
         fileListDiv.classList.add('hidden');
         return;
     }
-    
+
     fileListDiv.classList.remove('hidden');
+
     fileListDiv.innerHTML = `
         <h3>📋 Selected Files (${selectedFiles.length})</h3>
         ${selectedFiles.map((file, i) => `
             <div class="file-item">
                 <span class="file-name">${escapeHtml(file.name)}</span>
                 <span class="file-size">${formatBytes(file.size)}</span>
-                <button onclick="removeFile(${i})" style="background:none;border:none;cursor:pointer;">❌</button>
+                <button onclick="removeFile(${i})">❌</button>
             </div>
         `).join('')}
     `;
@@ -60,100 +63,101 @@ function updateFileList() {
 function removeFile(index) {
     selectedFiles.splice(index, 1);
     updateFileList();
+
     compressBtn.disabled = selectedFiles.length === 0;
-    if (selectedFiles.length === 0) fileInput.value = '';
+    if (!selectedFiles.length) fileInput.value = '';
 }
 
 function formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
+    if (!bytes) return '0 B';
+
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
+
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+
+    return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
 }
 
 function escapeHtml(str) {
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+    return str.replace(/[&<>]/g, (m) =>
+        m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'
+    );
 }
 
 compressBtn.addEventListener('click', async () => {
-    if (selectedFiles.length === 0) return;
-    
+    if (!selectedFiles.length) return;
+
     const formData = new FormData();
+
     selectedFiles.forEach(file => formData.append('videos', file));
+
     formData.append('targetSize', document.getElementById('targetSize').value);
     formData.append('unit', document.getElementById('sizeUnit').value);
     formData.append('quality', document.getElementById('quality').value);
     formData.append('preset', document.getElementById('preset').value);
-    
-    // UI updates
+
     compressBtn.disabled = true;
+
     const btnText = compressBtn.querySelector('.btn-text');
     const btnLoader = compressBtn.querySelector('.btn-loader');
+
     btnText.textContent = 'Compressing...';
-    btnLoader.classList.remove('hidden');
-    
+    btnLoader?.classList.remove('hidden');
+
     resultsDiv.classList.add('hidden');
-    
+
     try {
-        const response = await fetch('/process', {
+        const res = await fetch('/process', {
             method: 'POST',
             body: formData
         });
-        
-        const data = await response.json();
-        
+
+        const data = await res.json();
+
         if (data.error) {
-            alert(`Error: ${data.error}`);
+            alert(data.error);
             return;
         }
-        
+
         displayResults(data);
-        
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to compress videos. Check console for details.');
+
+    } catch (err) {
+        console.error(err);
+        alert('Compression failed');
     } finally {
         compressBtn.disabled = false;
         btnText.textContent = 'Compress Videos';
-        btnLoader.classList.add('hidden');
+        btnLoader?.classList.add('hidden');
     }
 });
 
 function displayResults(data) {
     resultsContainer.innerHTML = `
         <div class="summary">
-            <strong>📊 Summary:</strong> ${data.summary.successful}/${data.summary.total} successful
-            (${data.summary.failed} failed)
+            ${data.summary.successful}/${data.summary.total} successful
         </div>
-        ${data.results.map(result => `
-            <div class="result-card ${result.success ? 'success' : 'failed'}">
-                <div class="result-header">
-                    <span class="result-name">${escapeHtml(result.originalName)}</span>
-                    <span class="result-badge ${result.success ? 'success' : 'failed'}">
-                        ${result.success ? '✓ Success' : '✗ Failed'}
-                    </span>
+
+        ${data.results.map(r => `
+            <div class="result-card ${r.success ? 'success' : 'failed'}">
+                <div>
+                    ${escapeHtml(r.originalName)}
                 </div>
-                ${result.success ? `
-                    <div class="result-details">
-                        <div>📦 Original: ${formatBytes(result.originalSize)}</div>
-                        <div>🗜️ Compressed: ${formatBytes(result.compressedSize)}</div>
-                        <div>📉 Reduction: ${result.reductionPercent.toFixed(1)}%</div>
-                        <div>⏱️ Duration: ${result.duration.toFixed(1)}s</div>
-                    </div>
-                    <a href="${result.output}" class="result-download" download>⬇ Download Compressed Video</a>
-                ` : `
-                    <div class="result-details">
-                        <div>❌ Error: ${escapeHtml(result.error || 'Unknown error')}</div>
-                    </div>
-                `}
+
+                ${
+                    r.success
+                        ? `
+                        <div>
+                            ${formatBytes(r.originalSize)} → ${formatBytes(r.compressedSize)}
+                        </div>
+                        <div>${r.reductionPercent.toFixed(1)}% smaller</div>
+                        <a href="${r.output}" download>Download</a>
+                    `
+                        : `<div>${escapeHtml(r.error || 'Error')}</div>`
+                }
             </div>
         `).join('')}
     `;
+
     resultsDiv.classList.remove('hidden');
 }

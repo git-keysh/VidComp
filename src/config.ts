@@ -1,5 +1,4 @@
 import path from "path";
-import os from "os";
 
 export const PORT = parseInt(process.env.PORT || "1082", 10);
 export const NODE_ENV = process.env.NODE_ENV || "development";
